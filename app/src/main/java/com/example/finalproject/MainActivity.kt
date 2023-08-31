@@ -8,7 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.example.finalproject.ui.data.MyApplication
+import com.example.finalproject.ui.data.Application
 import com.example.finalproject.ui.navigation.NavGraph
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val myApp = application as MyApplication
+        val myApp = application as Application
         val appDatabase = myApp.database
         val userDao = appDatabase.userDao()
         setContent {

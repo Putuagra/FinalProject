@@ -48,9 +48,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.finalproject.Screen
+import com.example.finalproject.ui.data.Application
 import com.example.finalproject.ui.data.Movie
 import com.example.finalproject.ui.data.MovieFavorite
-import com.example.finalproject.ui.data.MyApplication
 import com.example.finalproject.ui.data.authorizationHeader
 import com.example.finalproject.ui.data.movieApiService
 import com.example.finalproject.ui.viewModel.AuthViewModel
@@ -69,7 +69,7 @@ fun DetailScreen(
 ) {
     val userLoggedIn = authViewModel.userLoggedIn.value
     val context = LocalContext.current
-    val application = context.applicationContext as MyApplication
+    val application = context.applicationContext as Application
     val database = application.database
     val movieFavDao = database.movieFavoriteDao()
 
@@ -229,10 +229,6 @@ fun DetailScreen(
                     } ?: false
 
                     if (isMovieInFavoriteList) {
-                        Text(
-                            text = "This movie is in your favorite list",
-                            color = Color.Red
-                        )
                         Button(
                             onClick = {
                                 CoroutineScope(Dispatchers.IO).launch {
@@ -248,8 +244,8 @@ fun DetailScreen(
                                             user_id = authViewModel.loggedInUserId.value
                                         )
                                         movieFavDao.deleteFavoriteById(
-                                            movieId = movie.id,
-                                            userId = authViewModel.loggedInUserId.value
+                                            movieId = movieFavEntity.movie_id,
+                                            userId = movieFavEntity.user_id
                                         )
 
                                         withContext(Dispatchers.Main) {

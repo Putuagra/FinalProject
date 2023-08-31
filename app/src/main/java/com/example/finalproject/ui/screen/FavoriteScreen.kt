@@ -35,8 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.finalproject.Screen
+import com.example.finalproject.ui.data.Application
 import com.example.finalproject.ui.data.Movie
-import com.example.finalproject.ui.data.MyApplication
 import com.example.finalproject.ui.viewModel.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +53,7 @@ fun FavoriteScreen(navController: NavController, authViewModel: AuthViewModel) {
     val userLoggedIn = authViewModel.userLoggedIn.value
     val userId = authViewModel.loggedInUserId.value
     val context = LocalContext.current
-    val application = context.applicationContext as MyApplication
+    val application = context.applicationContext as Application
     val database = application.database
     val movieFavDao = database.movieFavoriteDao()
 

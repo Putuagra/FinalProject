@@ -1,11 +1,11 @@
 package com.example.finalproject.ui.data
 
 import android.app.Application
-import androidx.room.Room
 
-class MyApplication : Application() {
+class Application : Application() {
     val database by lazy {
-        Room.databaseBuilder(this, MovieDatabase::class.java, "AppDatabase")
-            .build()
+//        Room.databaseBuilder(this, MovieDatabase::class.java, "AppDatabase")
+//            .build()
+        MovieDatabase.getDatabase(this)
     }
 }

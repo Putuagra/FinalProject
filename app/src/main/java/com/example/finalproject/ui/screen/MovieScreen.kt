@@ -32,11 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +55,9 @@ import com.example.finalproject.ui.data.MovieResponse
 import com.example.finalproject.ui.data.authorizationHeader
 import com.example.finalproject.ui.data.movieApiService
 import com.example.finalproject.ui.viewModel.AuthViewModel
-import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 enum class Tab {
     Movies,
@@ -73,41 +73,65 @@ fun MovieScreen(navController: NavController, authViewModel: AuthViewModel) {
     var isProfileNavigationDone by remember { mutableStateOf(false) }
     var isFavoriteNavigationDone by remember { mutableStateOf(false) }
     val userLoggedIn = authViewModel.userLoggedIn.value
-    var movieNowPlayingList by remember {
-        mutableStateOf(emptyList<Movie>())
-    }
+    val movieNowPlayingList = remember { mutableStateOf(emptyList<Movie>()) }
 
-    var movieTopRatedList by remember {
-        mutableStateOf(emptyList<Movie>())
-    }
+    val movieTopRatedList = remember { mutableStateOf(emptyList<Movie>()) }
 
-    var moviePopularList by remember {
-        mutableStateOf(emptyList<Movie>())
-    }
+    val moviePopularList = remember { mutableStateOf(emptyList<Movie>()) }
 
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(true) {
-        scope.launch {
-            try {
-                val response: MovieResponse = movieApiService.getNowPlayingMovies(
-                    authorizationHeader
-                )
-                movieNowPlayingList = response.results ?: emptyList()
+    movieApiService.getNowPlayingMovies(authorizationHeader).enqueue(object :
+        Callback<MovieResponse> {
+        override fun onResponse(call: Call<MovieResponse>, response: Response<MovieResponse>) {
+            if (response.isSuccessful) {
+                val movieResponse: MovieResponse? = response.body()
+                val nowPlayingMovies: List<Movie> = movieResponse?.results ?: emptyList()
 
-                val response2: MovieResponse = movieApiService.getTopRatedMovies(
-                    authorizationHeader
-                )
-                movieTopRatedList = response2.results ?: emptyList()
-
-                val response3: MovieResponse = movieApiService.getPopularMovies(
-                    authorizationHeader
-                )
-                moviePopularList = response3.results ?: emptyList()
-            } catch (e: Exception) {
-                Log.e("MovieScreen", "Error fetching movies: ${e.message}", e)
+                movieNowPlayingList.value = nowPlayingMovies
+            } else {
+                Log.e("MovieScreen", "API call failed: ${response.message()}")
             }
         }
-    }
+
+        override fun onFailure(call: Call<MovieResponse>, t: Throwable) {
+            Log.e("MovieScreen", "Error fetching movies: ${t.message}", t)
+        }
+    })
+
+    movieApiService.getTopRatedMovies(authorizationHeader)
+        .enqueue(object : Callback<MovieResponse> {
+            override fun onResponse(call: Call<MovieResponse>, response: Response<MovieResponse>) {
+                if (response.isSuccessful) {
+                    val movieResponse: MovieResponse? = response.body()
+                    val nowPlayingMovies: List<Movie> = movieResponse?.results ?: emptyList()
+
+                    movieTopRatedList.value = nowPlayingMovies
+                } else {
+                    Log.e("MovieScreen", "API call failed: ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<MovieResponse>, t: Throwable) {
+                Log.e("MovieScreen", "Error fetching movies: ${t.message}", t)
+            }
+        })
+
+    movieApiService.getPopularMovies(authorizationHeader)
+        .enqueue(object : Callback<MovieResponse> {
+            override fun onResponse(call: Call<MovieResponse>, response: Response<MovieResponse>) {
+                if (response.isSuccessful) {
+                    val movieResponse: MovieResponse? = response.body()
+                    val nowPlayingMovies: List<Movie> = movieResponse?.results ?: emptyList()
+
+                    moviePopularList.value = nowPlayingMovies
+                } else {
+                    Log.e("MovieScreen", "API call failed: ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<MovieResponse>, t: Throwable) {
+                Log.e("MovieScreen", "Error fetching movies: ${t.message}", t)
+            }
+        })
 
     Scaffold(
         topBar = {
@@ -165,9 +189,9 @@ fun MovieScreen(navController: NavController, authViewModel: AuthViewModel) {
         ) {
             when (selectedTab) {
                 Tab.Movies -> {
-                    MovieCategorySection("Now Playing Movies", movieNowPlayingList, navController)
-                    MovieCategorySection("Top Rated Movies", movieTopRatedList, navController)
-                    MovieCategorySection("Popular Movies", moviePopularList, navController)
+                    MovieCategorySection("Now Playing Movies", movieNowPlayingList.value, navController)
+                    MovieCategorySection("Top Rated Movies", movieTopRatedList.value, navController)
+                    MovieCategorySection("Popular Movies", moviePopularList.value, navController)
                 }
 
                 Tab.Favorite -> {

@@ -1,6 +1,7 @@
 package com.example.finalproject.ui.screen
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -58,6 +59,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -75,17 +79,24 @@ fun DetailScreen(
 
     var movieList by remember { mutableStateOf<List<Movie>?>(null) }
 
-    val movieDetail = remember {
-        mutableStateOf<Movie?>(null)
-    }
+    val movieDetail = remember { mutableStateOf<Movie?>(null) }
 
-    LaunchedEffect(itemId) {
-        val response = movieApiService.getMovieDetail(
-            authorizationHeader,
-            itemId
-        )
-        movieDetail.value = response
-    }
+    movieApiService.getMovieDetail(authorizationHeader, itemId).enqueue(object : Callback<Movie> {
+        override fun onResponse(call: Call<Movie>, response: Response<Movie>) {
+            if (response.isSuccessful) {
+                val detail: Movie? = response.body()
+
+                movieDetail.value = detail
+            } else {
+                Log.e("MovieScreen", "API call failed: ${response.message()}")
+            }
+        }
+
+        override fun onFailure(call: Call<Movie>, t: Throwable) {
+            Log.e("MovieScreen", "Error fetching movie detail: ${t.message}", t)
+        }
+    })
+
     LaunchedEffect(key1 = true) {
         CoroutineScope(Dispatchers.IO).launch {
             val movieFavList = movieFavDao.getAllByUserId(authViewModel.loggedInUserId.value)

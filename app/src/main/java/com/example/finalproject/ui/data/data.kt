@@ -1,6 +1,7 @@
 package com.example.finalproject.ui.data
 
 import okhttp3.OkHttpClient
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -28,25 +29,25 @@ data class Movie(
 
 interface MovieApiService {
     @GET("movie/now_playing?language=en-US&page=1")
-    suspend fun getNowPlayingMovies(
+    fun getNowPlayingMovies(
         @Header("Authorization") authorization: String
-    ): MovieResponse
+    ): Call<MovieResponse>
 
     @GET("movie/top_rated?language=en-US&page=1")
-    suspend fun getTopRatedMovies(
+    fun getTopRatedMovies(
         @Header("Authorization") authorization: String
-    ): MovieResponse
+    ): Call<MovieResponse>
 
     @GET("movie/popular?language=en-US&page=1")
-    suspend fun getPopularMovies(
+    fun getPopularMovies(
         @Header("Authorization") authorization: String
-    ): MovieResponse
+    ): Call<MovieResponse>
 
     @GET("movie/{movie_id}?language=en-US")
-    suspend fun getMovieDetail(
+    fun getMovieDetail(
         @Header("Authorization") authorization: String,
         @Path("movie_id") movieId: String
-    ): Movie
+    ): Call<Movie>
 }
 
 object RetrofitInstance {

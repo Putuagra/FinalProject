@@ -3,7 +3,8 @@
 package com.example.finalproject.ui.screen
 
 import android.annotation.SuppressLint
-import android.widget.Toast
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,10 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,12 +47,12 @@ import androidx.navigation.NavController
 import com.example.finalproject.R
 import com.example.finalproject.Screen
 import com.example.finalproject.ui.data.UserDao
-import com.example.finalproject.ui.viewModel.AuthViewModel
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @ExperimentalMaterial3Api
 @Composable
-fun Login(navController: NavController, userDao: UserDao, authViewModel: AuthViewModel) {
+fun Login(navController: NavController, userDao: UserDao, onLoggedChanges: () -> Unit) {
     var email by remember {
         mutableStateOf("")
     }
@@ -60,9 +61,12 @@ fun Login(navController: NavController, userDao: UserDao, authViewModel: AuthVie
     }
     var isLoginEnabled by remember { mutableStateOf(false) }
 
+    val sharedPreferences = LocalContext.current.getSharedPreferences("session", Context.MODE_PRIVATE)
+
     fun validateInput() {
         isLoginEnabled = email.isNotBlank() && password.isNotBlank()
     }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -128,7 +132,25 @@ fun Login(navController: NavController, userDao: UserDao, authViewModel: AuthVie
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = {
-                    authViewModel.loginUser(email, password, userDao)
+                    coroutineScope.launch {
+                        val account = userDao.getAccountByEmailAndPassword(email, password)
+                        val editor = sharedPreferences.edit()
+
+                        if (account != null) {
+
+                            editor.putBoolean("isLoggedIn", true)
+                            editor.putInt("accountId", account.id) // Store the accountId
+                            editor.putString("accountName", account.name)
+                            editor.putString("accountEmail", account.email)
+                            editor.apply()
+                            onLoggedChanges()
+                            navController.navigate(Screen.Home.route)
+                        } else {
+                            editor.putBoolean("isLoggedIn", false)
+                            editor.putInt("accountId", -1) // Store the accountId
+                            editor.apply()
+                        }
+                    }
                 },
                 enabled = isLoginEnabled,
                 colors = ButtonDefaults.buttonColors(
@@ -138,27 +160,6 @@ fun Login(navController: NavController, userDao: UserDao, authViewModel: AuthVie
                     .fillMaxWidth()
             ) {
                 Text(text = "Login", color = Color.White)
-            }
-            val context = LocalContext.current
-            LaunchedEffect(authViewModel.userLoggedIn.value, authViewModel.loginError.value) {
-                if (authViewModel.userLoggedIn.value) {
-                    Toast.makeText(
-                        context,
-                        "Login successful!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route)
-                        launchSingleTop = true
-                    }
-                }else if (authViewModel.loginError.value) {
-                    Toast.makeText(
-                        context,
-                        "Login failed. Check email and password.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
             }
             androidx.compose.material3.TextButton(
                 onClick = {

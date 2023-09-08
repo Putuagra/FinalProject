@@ -54,7 +54,6 @@ import com.example.finalproject.ui.data.Movie
 import com.example.finalproject.ui.data.MovieFavorite
 import com.example.finalproject.ui.data.authorizationHeader
 import com.example.finalproject.ui.data.movieApiService
-import com.example.finalproject.ui.viewModel.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,9 +68,9 @@ import retrofit2.Response
 fun DetailScreen(
     navController: NavController,
     itemId: String,
-    authViewModel: AuthViewModel
+    accountId: Int?,
+    isLoggedIn: Boolean
 ) {
-    val userLoggedIn = authViewModel.userLoggedIn.value
     val context = LocalContext.current
     val application = context.applicationContext as Application
     val database = application.database
@@ -99,7 +98,7 @@ fun DetailScreen(
 
     LaunchedEffect(key1 = true) {
         CoroutineScope(Dispatchers.IO).launch {
-            val movieFavList = movieFavDao.getAllByUserId(authViewModel.loggedInUserId.value)
+            val movieFavList = movieFavDao.getAllByUserId(accountId)
 
             val mappedMovieList = movieFavList?.map { movieFav ->
                 Movie(
@@ -233,7 +232,7 @@ fun DetailScreen(
                         )
                     }
                 }
-                if (userLoggedIn) {
+                if (isLoggedIn) {
                     // check if movie is in favorite list
                     val isMovieInFavoriteList = movieList?.any { movieFav ->
                         movieFav.id == movie.id
@@ -243,21 +242,25 @@ fun DetailScreen(
                         Button(
                             onClick = {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    val account = userLoggedIn
+                                    val account = isLoggedIn
 
                                     account?.let {
-                                        val movieFavEntity = MovieFavorite(
-                                            movie_id = movie.id,
-                                            title = movie.title,
-                                            poster_path = movie.poster_path,
-                                            overview = movie.overview,
-                                            release_date = "",
-                                            user_id = authViewModel.loggedInUserId.value
-                                        )
-                                        movieFavDao.deleteFavoriteById(
-                                            movieId = movieFavEntity.movie_id,
-                                            userId = movieFavEntity.user_id
-                                        )
+                                        val movieFavEntity = accountId?.let { it1 ->
+                                            MovieFavorite(
+                                                movie_id = movie.id,
+                                                title = movie.title,
+                                                poster_path = movie.poster_path,
+                                                overview = movie.overview,
+                                                release_date = "",
+                                                user_id = it1
+                                            )
+                                        }
+                                        if (movieFavEntity != null) {
+                                            movieFavDao.deleteFavoriteById(
+                                                movieId = movieFavEntity.movie_id,
+                                                userId = movieFavEntity.user_id
+                                            )
+                                        }
 
                                         withContext(Dispatchers.Main) {
                                             movieList = movieList?.filter { movieFav ->
@@ -282,23 +285,25 @@ fun DetailScreen(
                         Button(
                             onClick = {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    val account = userLoggedIn
+                                    val account = isLoggedIn
 
                                     account?.let {
-                                        val movieFavEntity = MovieFavorite(
-                                            movie_id = movie.id,
-                                            title = movie.title,
-                                            poster_path = movie.poster_path,
-                                            overview = movie.overview,
-                                            release_date = "",
-                                            user_id = authViewModel.loggedInUserId.value
-                                        )
+                                        val movieFavEntity = accountId?.let { it1 ->
+                                            MovieFavorite(
+                                                movie_id = movie.id,
+                                                title = movie.title,
+                                                poster_path = movie.poster_path,
+                                                overview = movie.overview,
+                                                release_date = "",
+                                                user_id = it1
+                                            )
+                                        }
 
                                         movieFavDao.insertMovieFav(movieFavEntity)
 
                                         withContext(Dispatchers.Main) {
                                             val movieFavList =
-                                                movieFavDao.getAllByUserId(authViewModel.loggedInUserId.value)
+                                                movieFavDao.getAllByUserId(accountId)
 
                                             val mappedMovieList = movieFavList?.map { movieFav ->
                                                 Movie(

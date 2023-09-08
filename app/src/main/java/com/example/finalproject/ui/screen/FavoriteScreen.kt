@@ -37,7 +37,6 @@ import androidx.navigation.NavController
 import com.example.finalproject.Screen
 import com.example.finalproject.ui.data.Application
 import com.example.finalproject.ui.data.Movie
-import com.example.finalproject.ui.viewModel.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,12 +45,13 @@ import kotlinx.coroutines.withContext
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoriteScreen(navController: NavController, authViewModel: AuthViewModel) {
+fun FavoriteScreen(
+    navController: NavController, accountId: Int?,
+    isLoggedIn: Boolean
+) {
     var selectedTab by remember { mutableStateOf(Tab.Favorite) }
     var isHomeNavigationDone by remember { mutableStateOf(false) }
     var isProfileNavigationDone by remember { mutableStateOf(false) }
-    val userLoggedIn = authViewModel.userLoggedIn.value
-    val userId = authViewModel.loggedInUserId.value
     val context = LocalContext.current
     val application = context.applicationContext as Application
     val database = application.database
@@ -61,7 +61,7 @@ fun FavoriteScreen(navController: NavController, authViewModel: AuthViewModel) {
 
     LaunchedEffect(key1 = true) {
         CoroutineScope(Dispatchers.IO).launch {
-            val movieFavList = movieFavDao.getAllByUserId(userId)
+            val movieFavList = movieFavDao.getAllByUserId(accountId)
 
             val mappedMovieList = movieFavList?.map { movieFav ->
                 Movie(
@@ -114,7 +114,7 @@ fun FavoriteScreen(navController: NavController, authViewModel: AuthViewModel) {
                 }
             }
         }
-    ){
+    ) {
         when (selectedTab) {
             Tab.Movies -> {
                 if (!isHomeNavigationDone) {
@@ -124,7 +124,7 @@ fun FavoriteScreen(navController: NavController, authViewModel: AuthViewModel) {
             }
 
             Tab.Favorite -> {
-                if (userLoggedIn) {
+                if (isLoggedIn) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -165,8 +165,7 @@ fun FavoriteScreen(navController: NavController, authViewModel: AuthViewModel) {
                             }
                         }
                     }
-                }
-                else {
+                } else {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()

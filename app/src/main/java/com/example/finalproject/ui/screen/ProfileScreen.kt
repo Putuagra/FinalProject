@@ -1,6 +1,8 @@
 package com.example.finalproject.ui.screen
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,27 +38,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.finalproject.R
 import com.example.finalproject.Screen
-import com.example.finalproject.ui.viewModel.AuthViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel) {
-    val userLoggedIn = authViewModel.userLoggedIn.value
+fun ProfileScreen(
+    navController: NavController,
+    isLoggedIn: Boolean,
+    accountName: String,
+    accountEmail: String,
+    onLoggedChanges: () -> Unit
+) {
+    val sharedPreferences =
+        LocalContext.current.getSharedPreferences("session", Context.MODE_PRIVATE)
     var selectedTab by remember { mutableStateOf(Tab.Profile) }
     var isHomeNavigationDone by remember { mutableStateOf(false) }
     var isFavoriteNavigationDone by remember { mutableStateOf(false) }
     val loggedInUser =
-        remember(authViewModel.loggedInUsername.value, authViewModel.loggedInEmail.value) {
+        remember(accountName, accountEmail) {
             LoggedInUser(
-                username = "${authViewModel.loggedInUsername.value}",
-                email = "${authViewModel.loggedInEmail.value}"
+                username = accountName,
+                email = accountEmail
             )
         }
 
@@ -93,7 +102,7 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel) {
                 }
             }
         }
-    ){
+    ) {
         when (selectedTab) {
             Tab.Movies -> {
                 if (!isHomeNavigationDone) {
@@ -110,7 +119,7 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel) {
             }
 
             Tab.Profile -> {
-                if (userLoggedIn) {
+                if (isLoggedIn) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -133,7 +142,12 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = {
-                                authViewModel.logoutUser(navController)
+                                val editor = sharedPreferences.edit()
+                                editor.putBoolean("isLoggedIn", false)
+                                editor.clear()
+                                editor.apply()
+                                onLoggedChanges()
+                                navController.navigate(Screen.Home.route)
                             },
                             colors = ButtonDefaults.buttonColors(Color.Blue),
                             modifier = Modifier.fillMaxWidth()

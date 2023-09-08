@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +55,6 @@ import com.example.finalproject.ui.data.Movie
 import com.example.finalproject.ui.data.MovieResponse
 import com.example.finalproject.ui.data.authorizationHeader
 import com.example.finalproject.ui.data.movieApiService
-import com.example.finalproject.ui.viewModel.AuthViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -68,11 +68,10 @@ enum class Tab {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MovieScreen(navController: NavController, authViewModel: AuthViewModel) {
+fun MovieScreen(navController: NavController, isLoggedIn: Boolean, accountName: String) {
     var selectedTab by remember { mutableStateOf(Tab.Movies) }
     var isProfileNavigationDone by remember { mutableStateOf(false) }
     var isFavoriteNavigationDone by remember { mutableStateOf(false) }
-    val userLoggedIn = authViewModel.userLoggedIn.value
     val movieNowPlayingList = remember { mutableStateOf(emptyList<Movie>()) }
 
     val movieTopRatedList = remember { mutableStateOf(emptyList<Movie>()) }
@@ -138,7 +137,7 @@ fun MovieScreen(navController: NavController, authViewModel: AuthViewModel) {
             TopAppBar(
                 title = {
                     Text(
-                        text = if (userLoggedIn) "Welcome, ${authViewModel.loggedInUsername.value}" else "Movie App",
+                        text = if (isLoggedIn) "Welcome, $accountName" else "Movie App",
                         color = Color.White
                     )
                 },
@@ -189,7 +188,11 @@ fun MovieScreen(navController: NavController, authViewModel: AuthViewModel) {
         ) {
             when (selectedTab) {
                 Tab.Movies -> {
-                    MovieCategorySection("Now Playing Movies", movieNowPlayingList.value, navController)
+                    MovieCategorySection(
+                        "Now Playing Movies",
+                        movieNowPlayingList.value,
+                        navController
+                    )
                     MovieCategorySection("Top Rated Movies", movieTopRatedList.value, navController)
                     MovieCategorySection("Popular Movies", moviePopularList.value, navController)
                 }
